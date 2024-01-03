@@ -18,4 +18,4 @@ I do not own the models, they are from [Activision, Infinity Ward](https://www.i
 Texture mapping error when spectating a player (library related?)
 
 ## Have fun !
-![micheal jackson](https://tenor.com/iqv3Y7x9y2K.gif)
+![micheal jackson](https://github.com/Edouard127/LethalWarfare2/blob/master/data/ghost.gif)
