@@ -18,12 +18,12 @@
 
   <!-- Replace mbundle with the Asset Bundle Name from your unity project -->
   <ItemGroup>
-    <None Remove="mw2bundle" />
-	<None Remove="vignetteShader.shader" />
+    <None Remove="data/mw2bundle" />
+	<None Remove="data/vignetteShader.shader" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="mw2bundle" />
-	<EmbeddedResource Include="vignetteShader.shader" />
+    <EmbeddedResource Include="data/mw2bundle" />
+	<EmbeddedResource Include="data/vignetteShader.shader" />
   </ItemGroup>
 
   <ItemGroup>
