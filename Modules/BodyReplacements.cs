@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
 using ModelReplacement;
 
-namespace LethalWarfare2.Replacements
+namespace LethalWarfare2.Modules
 {
     public class GhostReplacement : BodyReplacementBase
     {
         protected override GameObject LoadAssetsAndReturnModel()
         {
-            return Assets.MainAssetBundle.LoadAsset<GameObject>("Ghost Nightwar");
+            string model = "Ghost Nightwar";
+            return Assets.MainModelBundle.LoadAsset<GameObject>(model);
         }
         /*protected override void OnEmoteStart(int emoteId)
         {

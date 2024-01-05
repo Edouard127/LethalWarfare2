@@ -4,10 +4,10 @@ using UnityEngine;
 using System.Reflection;
 using ModelReplacement;
 using BepInEx.Configuration;
-using LethalWarfare2.Replacements;
-using System.Collections.Generic;
+using System;
+using LethalWarfare2.Modules.Items;
 
-namespace LethalWarfare2
+namespace LethalWarfare2.Modules
 {
     [BepInPlugin(GUID, NAME, VERSION)]
     [BepInDependency("meow.ModelReplacementAPI", BepInDependency.DependencyFlags.HardDependency)]
@@ -16,7 +16,7 @@ namespace LethalWarfare2
     {
         public const string GUID = "Edouard127.LethalWarfare2";
         public const string NAME = "Lethal Warfare 2";
-        public const string VERSION = "1.1.0";
+        public const string VERSION = "1.2.0";
 
         public static ConfigFile config;
 
@@ -31,8 +31,9 @@ namespace LethalWarfare2
 
         private void Awake()
         {
-            config = base.Config;
+            config = Config;
             Assets.PopulateAssets();
+            ItemLoader.Register();
 
             disablePhysics = config.Bind("Lethal Warfare 2", "Disable Physics", false, "Disable physics for all players");
             disablePhysicsRange = config.Bind("Lethal Warfare 2", "Disable Physics Range", 100.0, "Disable physics for all players within this range");
@@ -47,36 +48,52 @@ namespace LethalWarfare2
     }
     public static class Assets
     {
-        public static string mainAssetBundleName = "mw2bundle";
-        public static AssetBundle MainAssetBundle = null;
-        public static AssetBundle MainShaderBundle = null;
+        // The reason why I can't have one bundle for everything is because I lack the knowledge of Unity bundles and the SDK I use to bundle the models has a monopole on the bundles
+        public static string modelBundleName = "mw2bundle";
+        public static string assetBundleName = "itembundle";
+        public static string postProcessingBundleName = "postprocessing";
+        public static AssetBundle MainModelBundle = null; // Used for character models
+        public static AssetBundle MainAssetBundle = null; // Used for item models, sounds, etc.
+        public static AssetBundle PostProcessingBundle = null; // Used for post processing effects
 
-        private static string GetAssemblyName() => Assembly.GetExecutingAssembly().FullName.Split(',')[0];
+        public static string GetAssemblyName() => Assembly.GetExecutingAssembly().FullName.Split(',')[0];
         public static void PopulateAssets()
         {
-            if (MainAssetBundle == null)
+            if (MainModelBundle == null)
             {
-                using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetAssemblyName() + "." + mainAssetBundleName))
+                using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetAssemblyName() + "." + modelBundleName))
+                {
+                    MainModelBundle = AssetBundle.LoadFromStream(assetStream);
+                }
+
+                using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetAssemblyName() + "." + assetBundleName))
                 {
                     MainAssetBundle = AssetBundle.LoadFromStream(assetStream);
                 }
 
+                using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetAssemblyName() + "." + postProcessingBundleName))
+                {
+                    PostProcessingBundle = AssetBundle.LoadFromStream(assetStream);
+                }
+            }
+
+            if (MainModelBundle == null)
+            {
+                throw new Exception("Could not load model bundle!");
             }
 
             if (MainAssetBundle == null)
             {
-                throw new System.Exception("Could not load asset bundle!");
+                throw new Exception("Could not load asset bundle!");
             }
-
-            // If you want to add audio clips, use this
-            // new RandomAudioClip().AddAudio("mw2_sound");
         }
 
-        public static Shader GetShaderFromName(string name) => Assets.MainAssetBundle.LoadAsset(name) as Shader;
+        public static UnityEngine.Object GetAssetFromName(string name) => MainModelBundle.LoadAsset(name) ?? MainAssetBundle.LoadAsset(name);
+        public static Shader GetShaderFromName(string name) => GetAssetFromName(name) as Shader;
+        public static AudioClip GetAudioClipFromName(string name) => GetAssetFromName(name) as AudioClip;
+        public static Sprite GetSpriteFromName(string name) => GetAssetFromName(name) as Sprite;
 
-        public static AudioClip GetAudioClipFromName(string name) =>  Assets.MainAssetBundle.LoadAsset(name) as AudioClip;
-
-        public class RandomAudioClip
+        /*public class RandomAudioClip
         {
             List<AudioClip> audioClipList = new List<AudioClip>();
 
@@ -89,11 +106,12 @@ namespace LethalWarfare2
 
             public void AddAudio(string name)
             {
-                var clip = Assets.GetAudioClipFromName(name);
-                if (clip != null) { 
-                    audioClipList.Add(clip); 
+                var clip = GetAudioClipFromName(name);
+                if (clip != null)
+                {
+                    audioClipList.Add(clip);
                 }
             }
-        }
+        }*/
     }
 }

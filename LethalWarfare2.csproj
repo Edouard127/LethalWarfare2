@@ -18,12 +18,9 @@
 
   <!-- Replace mbundle with the Asset Bundle Name from your unity project -->
   <ItemGroup>
-    <None Remove="data/mw2bundle" />
-	<None Remove="data/vignetteShader.shader" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="data/mw2bundle" />
-	<EmbeddedResource Include="data/vignetteShader.shader" />
+	<EmbeddedResource Include="mw2bundle" />
+	<EmbeddedResource Include="itembundle" />
+	<EmbeddedResource Include="postprocessing" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,6 +43,9 @@
     <Reference Include="BepInEx">
       <HintPath>..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
+    <Reference Include="LethalLib">
+      <HintPath>data\LethalLib.dll</HintPath>
+    </Reference>
     <Reference Include="ModelReplacementAPI">
       <HintPath>ModelReplacementAPI.dll</HintPath>
     </Reference>
@@ -57,6 +57,21 @@
     </Reference>
     <Reference Include="Unity.Netcode.Runtime">
       <HintPath>$(LethalCompanyPath)\Lethal Company_Data\Managed\Unity.Netcode.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Runtime">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.HighDefinition.Config.Runtime">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Unity.RenderPipelines.HighDefinition.Config.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.HighDefinition.Runtime">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\..\..\..\Program Files (x86)\Steam\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.dll</HintPath>
