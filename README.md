@@ -1,4 +1,4 @@
-# Lethal Warfare 2 v1.1.0
+# Lethal Warfare 2 v1.2.0
 ### Adds the Modern Warfare 2 2022 Models to the game
 
 This mods adds multiple models from Call Of Duty Modern Warfare 2 2022 and some functionalities such as tactical spectating.
