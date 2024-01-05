@@ -3,10 +3,12 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
-data/mw2bundle
-data/mw2bundle.*
-data/itembundle
-data/itembundle.*
+mw2bundle
+mw2bundle.*
+itembundle
+itembundle.*
+postprocessing
+postprocessing.*
 
 # User-specific files
 *.rsuser
