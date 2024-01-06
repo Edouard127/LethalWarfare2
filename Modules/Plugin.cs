@@ -33,7 +33,6 @@ namespace LethalWarfare2.Modules
         {
             config = Config;
             Assets.PopulateAssets();
-            ItemLoader.Register();
 
             disablePhysics = config.Bind("Lethal Warfare 2", "Disable Physics", false, "Disable physics for all players");
             disablePhysicsRange = config.Bind("Lethal Warfare 2", "Disable Physics Range", 100.0, "Disable physics for all players within this range");

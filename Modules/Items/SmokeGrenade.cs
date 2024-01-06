@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections;
 using GameNetcodeStuff;
-using HarmonyLib;
 using UnityEngine;
 
 namespace LethalWarfare2.Modules.Items
@@ -12,56 +8,35 @@ namespace LethalWarfare2.Modules.Items
     {
         public ParticleSystem smoke = new ParticleSystem();
 
-        // Used to get the methods
-        private StunGrenadeItem stunGrenadeItem = new StunGrenadeItem();
-
-        public float timeToExplode = 2f;
-
-        public AudioClip throwSFX;
-
         public bool pinPulled;
-
         public bool inPullingPinAnimation;
-
         public Coroutine pullPinCoroutine;
-
         public Animator itemAnimator;
 
         public AudioSource itemAudio;
-
         public AudioClip pullPinSFX;
-
         public AudioClip explodeSFX;
 
+        public float timeToExplode = 1f;
         public float explodeTimer;
-
         public bool hasExploded;
 
         public PlayerControllerB playerThrownBy;
-        public SmokeGrenade() : base()
+
+        public SmokeGrenade()
         {
-            // THIS IS TEMPORARY
-            this.itemProperties = new Item();
-            this.terminalNode = new TerminalNode();
-            this.unlockableItem = new UnlockableItem();
+            this.SetName("Smoke Grenade")
+                .SetCost(50)
+                .SetWeight(0f)
+                .SetIcon("Smoke Grenade Image")
+                .SetThrowSFX("Smoke Grenade Throw")
+                .SetIsDefensiveWeapon(true)
+                .SetCanBeGrabbedBeforeGameStart(true)
+                .SetAlwaysInStock(true);
 
-            this.terminalNode.displayText = "Smoke Grenade";
-            this.terminalNode.itemCost = 80;
-
-            this.itemProperties.itemName = "Smoke Grenade";
-            this.itemProperties.canBeGrabbedBeforeGameStart = true;
-            this.itemProperties.weight = 0f;
-            this.itemProperties.itemIsTrigger = true;
-            this.itemProperties.itemIcon = Assets.GetSpriteFromName("Smoke Grenade Image");
-            // this.itemProperties.throwSFX = Assets.GetAudioClipFromName("Smoke Grenade Throw");
-            this.itemProperties.isDefensiveWeapon = true;
-
-            this.unlockableItem.unlockableName = "Smoke Grenade";
-            this.unlockableItem.alwaysInStock = true;
-
-            itemAnimator = stunGrenadeItem.itemAnimator;
-            itemAudio = stunGrenadeItem.itemAudio;
-            pullPinSFX = stunGrenadeItem.pullPinSFX;
+            //itemAnimator = GameObject.Find("StunGrenade").GetComponent<Animator>();
+            //itemAudio = GameObject.Find("StunGrenade").GetComponent<AudioSource>();
+            //pullPinSFX = GameObject.Find("FlashbangPullPin").GetComponent<AudioClip>();
             explodeSFX = Assets.GetAudioClipFromName("Smoke Grenade Throw");
         }
 
@@ -90,11 +65,10 @@ namespace LethalWarfare2.Modules.Items
             isPocketed = false;
         }
 
-        // Realistic smoke grenade throw with realistic physics
         public override void FallWithCurve()
         {
             float magnitude = (startFallingPosition - targetFloorPosition).magnitude;
-            base.transform.rotation = Quaternion.Lerp(base.transform.rotation, Quaternion.Euler(itemProperties.restingRotation.x, base.transform.eulerAngles.y, itemProperties.restingRotation.z), 14f * Time.deltaTime / magnitude);
+            base.transform.rotation = Quaternion.Lerp(base.transform.rotation, Quaternion.Euler(properties.restingRotation.x, base.transform.eulerAngles.y, properties.restingRotation.z), 14f * Time.deltaTime / magnitude);
             base.transform.localPosition = Vector3.Lerp(startFallingPosition, targetFloorPosition, Mathf.Sin(fallTime * 3.14159274f));
             fallTime += Time.deltaTime * 0.5f;
         }
@@ -119,7 +93,7 @@ namespace LethalWarfare2.Modules.Items
                 hasExploded = true;
                 itemAudio.PlayOneShot(explodeSFX);
                 WalkieTalkie.TransmitOneShotAudio(itemAudio, explodeSFX, 1f);
-                smoke.Emit(transform.position, new Vector3(0.5f, 0.5f, 0.5f), 1f, 15f, Color.white);
+                smoke.Emit(transform.position, new Vector3(0.5f, 0.5f, 0.5f), 1f, 15f, Color.gray);
             }
             DestroyObjectInHand(playerThrownBy);
         }
