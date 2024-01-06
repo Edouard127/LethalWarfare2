@@ -1,20 +1,26 @@
-﻿using System;
-using GameNetcodeStuff;
+﻿using GameNetcodeStuff;
 using HarmonyLib;
 using ModelReplacement;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using static UnityEngine.InputSystem.InputAction;
 
 namespace LethalWarfare2.Modules
 {
     [HarmonyPatch(typeof(PlayerControllerB))]
     internal class PlayerControllerBPatch : PlayerControllerB
     {
+        public static InputAction toggleKey = new InputAction("Toggle Tactical Camera", InputActionType.Value, "<Keyboard>/" + Plugin.toggleKey.Value.ToString());
         public static bool switchCamera = false;
-        private static bool lastKeyState = false;
+        public static bool forceDisable = false;
+
+        public static bool hasCustomModel = false;
+        public static bool spectatedHasCustomModel = false;
+
+        public static bool displayedTip = false;
 
         private static GameObject globalPrefab;
         private static GameObject _postProcessing;
-
         public static GameObject PostProcessing
         {
             get
@@ -30,30 +36,49 @@ namespace LethalWarfare2.Modules
             }
         }
 
+        private static GameObject _playerHelmet;
+        public static GameObject PlayerHelmet
+        {
+            get
+            {
+                if (_playerHelmet == null)
+                {
+                    _playerHelmet = GameObject.Find("Systems/Rendering/PlayerHUDHelmetModel/");
+                }
+
+                return _playerHelmet;
+            }
+        }
+
+        [HarmonyPatch("Start")]
+        [HarmonyPostfix]
+        private static void Start(ref PlayerControllerB __instance)
+        {
+            toggleKey.started += ToggleTacticalCamera;
+            toggleKey.Enable();
+        }
+
+
         [HarmonyPatch("Update")]
         [HarmonyPostfix]
         private static void Update(ref PlayerControllerB __instance)
         {
-            // Check if key is pressed
-            /*if (Plugin.keyboardShortcut.Value.IsDown())
-            {
-                lastKeyState = true;
-            }
+            switchCamera = __instance.spectatedPlayerScript != null && spectatedHasCustomModel && !forceDisable;
 
+            __instance.disableLookInput = switchCamera && !__instance.quickMenuManager.isMenuOpen;
 
-            if (Plugin.keyboardShortcut.Value.IsUp() && lastKeyState)
-            {
-                lastKeyState = false;
-                switchCamera = !switchCamera && __instance.isPlayerDead && __instance.spectatedPlayerScript != null;
-            }*/
-
-            switchCamera = __instance.isPlayerDead && __instance.spectatedPlayerScript != null && !__instance.spectatedPlayerScript.isPlayerDead;
-            __instance.disableLookInput = !__instance.quickMenuManager.isMenuOpen && switchCamera;
-            PostProcessing.SetActive(switchCamera);
+            PostProcessing.SetActive(__instance.disableLookInput);
+            PlayerHelmet.SetActive(false);
 
             if (switchCamera)
             {
-                __instance.spectateCameraPivot.Rotate(0f, __instance.spectatedPlayerScript.gameplayCamera.transform.localEulerAngles.y-30, 0f);
+                if (!displayedTip)
+                {
+                    HUDManager.Instance.DisplaySpectatorTip($"Press [{Plugin.toggleKey.Value.ToString()}] to switch the camera view");
+                    displayedTip = true;
+                }
+
+                __instance.spectateCameraPivot.Rotate(0f, __instance.spectatedPlayerScript.gameplayCamera.transform.localEulerAngles.y, 0f);
                 __instance.spectateCameraPivot.transform.localEulerAngles = new Vector3(__instance.spectateCameraPivot.transform.localEulerAngles.x, 0f, 0f);
                 __instance.spectateCameraPivot.transform.rotation = __instance.spectatedPlayerScript.gameplayCamera.transform.rotation;
             }
@@ -63,32 +88,35 @@ namespace LethalWarfare2.Modules
         [HarmonyPrefix]
         private static bool RaycastSpectateCameraAroundPivot(ref PlayerControllerB __instance)
         {
-            if (switchCamera)
+            // /Environment/HangarShip/Player/ScavengerModel/metarig/spine/spine.001/spine.002/spine.003/spine.004
+            Transform? boneRig = GetBoneTransform(__instance.spectatedPlayerScript, "spine.004");
+            hasCustomModel = false; // Waiting for the model replacement api to add a way to check if the player has a custom model
+            spectatedHasCustomModel = boneRig != null;
+
+            if (switchCamera && spectatedHasCustomModel)
             {
-                // This will assure that the tactical camera will always the same distance from the player regardless of the player's model
-                BodyReplacementBase component = __instance.spectatedPlayerScript.thisPlayerBody.gameObject.GetComponent<BodyReplacementBase>();
-                if (component == null)
-                {
-                    return true; // Player doesn't have a model replacement
-                }
-
-                // /Environment/HangarShip/Player/ScavengerModel/metarig/spine/spine.001/spine.002/spine.003/spine.004
-                Transform boneRig = component.avatar.GetAvatarTransformFromBoneName("spine.004");
-                if (boneRig == null)
-                {
-                    return true; // Player doesn't have a bone rig
-                }
-
-                __instance.playersManager.spectateCamera.fieldOfView = 100f;
                 __instance.spectateCameraPivot.position = boneRig.position
-                    + __instance.spectatedPlayerScript.gameplayCamera.transform.right * 0.25f
-                    + __instance.spectatedPlayerScript.gameplayCamera.transform.up * 0.3f
-                    + __instance.spectatedPlayerScript.gameplayCamera.transform.forward * 1.3f;
+                 + __instance.spectatedPlayerScript.gameplayCamera.transform.right * Plugin.tacticalCameraOffsetX.Value
+                 + __instance.spectatedPlayerScript.gameplayCamera.transform.up * Plugin.tacticalCameraOffsetY.Value
+                 + __instance.spectatedPlayerScript.gameplayCamera.transform.forward * Plugin.tacticalCameraOffsetZ.Value;
 
                 __instance.playersManager.spectateCamera.transform.LookAt(__instance.spectateCameraPivot.position);
             }
 
             return !switchCamera;
+        }
+
+        public static Transform? GetBoneTransform(PlayerControllerB __instance, string bone)
+        {
+            // This will assure that the tactical camera will always the same distance from the player regardless of the player's model
+            // We could even add an object directly on the model to make it easier to the position
+            BodyReplacementBase? component = __instance.thisPlayerBody.gameObject.GetComponent<BodyReplacementBase>();
+            return component?.avatar.GetAvatarTransformFromBoneName(bone);
+        }
+
+        public static void ToggleTacticalCamera(CallbackContext ctx)
+        {
+            forceDisable = !forceDisable;
         }
     }
 }

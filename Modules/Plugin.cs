@@ -5,7 +5,8 @@ using System.Reflection;
 using ModelReplacement;
 using BepInEx.Configuration;
 using System;
-using LethalWarfare2.Modules.Items;
+using UnityEngine.InputSystem;
+using LethalWarfare2.Modules.Model;
 
 namespace LethalWarfare2.Modules
 {
@@ -24,20 +25,31 @@ namespace LethalWarfare2.Modules
 
 
         // TODO: Implement this
-        public static ConfigEntry<bool> disablePhysics { get; private set; }
-        public static ConfigEntry<double> disablePhysicsRange { get; private set; }
-        public static ConfigEntry<bool> tacticalCameraView { get; private set; }
-        public static ConfigEntry<KeyboardShortcut> keyboardShortcut { get; private set; }
+        public static ConfigEntry<bool> disablePhysics;
+        public static ConfigEntry<double> disablePhysicsRange;
+
+        public static ConfigEntry<bool> tacticalCamera;
+        public static ConfigEntry<float> tacticalCameraOffsetX;
+        public static ConfigEntry<float> tacticalCameraOffsetY;
+        public static ConfigEntry<float> tacticalCameraOffsetZ;
+
+        public static ConfigEntry<KeyCode> toggleKey;
 
         private void Awake()
         {
             config = Config;
             Assets.PopulateAssets();
 
+            // Not implemented yet
             disablePhysics = config.Bind("Lethal Warfare 2", "Disable Physics", false, "Disable physics for all players");
             disablePhysicsRange = config.Bind("Lethal Warfare 2", "Disable Physics Range", 100.0, "Disable physics for all players within this range");
-            tacticalCameraView = config.Bind("Lethal Warfare 2", "Tactical Camera View", true, "Set the camera position above the spectated player's head");
-            keyboardShortcut = config.Bind("Lethal Warfare 2", "Keyboard Shortcut", new KeyboardShortcut(KeyCode.F1), "Toggle the tactical camera view");
+
+            tacticalCamera = config.Bind("Lethal Warfare 2", "Tactical Camera View", true, "Set the camera position above the spectated player's head");
+            tacticalCameraOffsetX = config.Bind("Lethal Warfare 2", "Tactical Camera Offset X", 0.25f, "Set the camera offset on the X axis");
+            tacticalCameraOffsetY = config.Bind("Lethal Warfare 2", "Tactical Camera Offset Y", 0.25f, "Set the camera offset on the Y axis");
+            tacticalCameraOffsetZ = config.Bind("Lethal Warfare 2", "Tactical Camera Offset Z", 1.2f, "Set the camera offset on the Z axis");
+
+            toggleKey = config.Bind("Lethal Warfare 2", "Keyboard Shortcut", KeyCode.F1, "Toggle the tactical camera view");
 
             ModelReplacementAPI.RegisterSuitModelReplacement("Ghost Nightwar", typeof(GhostReplacement));
 

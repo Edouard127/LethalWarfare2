@@ -1,65 +1,148 @@
-﻿using HarmonyLib;
+﻿using System;
+using System.Collections;
+using GameNetcodeStuff;
+using HarmonyLib;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace LethalWarfare2.Modules.Items
 {
-    [HarmonyPatch(typeof(StunGrenadeItem))]
-    internal class SmokeGrenade
+    public class SmokeGrenade : GrabbableObject
     {
-        private static ParticleSystem smoke = new ParticleSystem();
-        private static float particleTime = 15f;
-        private static float particleTimer = 0f;
+        private ParticleSystem smoke;
+        private float particleTime = 15f;
+        private float particleTimer = 0f;
 
-        [HarmonyPatch("__initializeVariables")]
-        [HarmonyPostfix]
-        private static void Start(ref StunGrenadeItem __instance)
+        private float explodeTimer = 0f;
+        private bool hasExploded = false;
+        private bool isExploded = false;
+
+        private AudioSource itemAudio;
+        private AudioClip explodeSFX;
+        private AudioClip pullPinSFX;
+        private Animator itemAnimator;
+
+        private bool pinPulled = false;
+        private bool inPullingPinAnimation = false;
+        private Coroutine pullPinCoroutine = null;
+
+        public RaycastHit grenadeHit;
+        public Ray grenadeThrowRay;
+
+        private PlayerControllerB playerThrownBy;
+
+        public void Awake()
         {
-            __instance.itemProperties.name = "Smoke Grenade";
-            __instance.itemProperties.weight = 0f;
-            __instance.itemProperties.itemIcon = Assets.GetSpriteFromName("Smoke Grenade Image");
-            // __instance.itemProperties.throwSFX = Assets.GetAudioClipFromName("Smoke Grenade Throw");
-            __instance.itemProperties.isDefensiveWeapon = true;
-            __instance.itemProperties.canBeGrabbedBeforeGameStart = true;
-            __instance.explodeSFX = Assets.GetAudioClipFromName("Smoke Grenade Throw");
-            __instance.TimeToExplode = 1f;
+            base.itemProperties.name = "Smoke Grenade";
+            base.itemProperties.weight = 0f;
+            base.itemProperties.itemIcon = Assets.GetSpriteFromName("Smoke Grenade Image");
+            explodeSFX = Assets.GetAudioClipFromName("Smoke Grenade Throw");
+            itemAudio = GetComponent<AudioSource>();
+
+            base.grabbable = true;
+            base.grabbableToEnemies = true;
+            base.mainObjectRenderer = GetComponent<MeshRenderer>();
         }
 
-        [HarmonyPatch("ExplodeStunGrenade")]
-        [HarmonyPrefix]
-        private static bool ExplodeStunGrenade(ref StunGrenadeItem __instance)
+        public override void ItemActivate(bool used, bool buttonDown = true)
         {
-            if (!__instance.hasExploded)
+            base.ItemActivate(used, buttonDown);
+            if (inPullingPinAnimation)
             {
-                __instance.hasExploded = true;
-                __instance.itemAudio.PlayOneShot(__instance.explodeSFX);
-                WalkieTalkie.TransmitOneShotAudio(__instance.itemAudio, __instance.explodeSFX);
-                Object.Instantiate(parent: (!__instance.isInElevator) ? RoundManager.Instance.mapPropsContainer.transform : StartOfRound.Instance.elevatorTransform, original: __instance.stunGrenadeExplosion, position: __instance.transform.position, rotation: Quaternion.identity);
-                if (__instance.DestroyGrenade)
+                return;
+            }
+
+            if (!pinPulled)
+            {
+                if (pullPinCoroutine == null)
                 {
-                    __instance.DestroyObjectInHand(__instance.playerThrownBy);
+                    playerHeldBy.activatingItem = true;
+                    pullPinCoroutine = StartCoroutine(pullPinAnimation());
                 }
             }
-            return false;
+            else if (base.IsOwner)
+            {
+                playerHeldBy.DiscardHeldObject(placeObject: true, null, GetGrenadeThrowDestination());
+            }
         }
 
-        [HarmonyPatch("Update")]
-        [HarmonyPrefix]
-        private static bool Update(ref StunGrenadeItem __instance)
+        public IEnumerator pullPinAnimation()
         {
-            if (__instance.hasExploded && particleTimer > -1f)
+            inPullingPinAnimation = true;
+            playerHeldBy.activatingItem = true;
+            playerHeldBy.doingUpperBodyEmote = 1.16f;
+            playerHeldBy.playerBodyAnimator.SetTrigger("PullGrenadePin");
+            itemAnimator.SetTrigger("pullPin");
+            itemAudio.PlayOneShot(pullPinSFX);
+            WalkieTalkie.TransmitOneShotAudio(itemAudio, pullPinSFX, 0.8f);
+            yield return new WaitForSeconds(1f);
+            if (playerHeldBy != null)
             {
-                if (particleTimer > particleTime)
+                playerHeldBy.activatingItem = false;
+                playerThrownBy = playerHeldBy;
+            }
+
+            inPullingPinAnimation = false;
+            pinPulled = true;
+            itemUsedUp = true;
+        }
+
+        public override void Update()
+        {
+            base.Update();  
+
+            if (pinPulled && !hasExploded)
+            {
+                if (base.IsOwner)
                 {
-                    particleTimer = -1f;
-                    smoke.Stop();
-                }
-                else
-                {
-                    smoke.Emit(__instance.transform.position, new Vector3(2f, 2f, 2f), 200f, 15000f, Color.gray);
-                    particleTimer += Time.deltaTime;
+                    explodeTimer += Time.deltaTime;
+                    if (explodeTimer > 2f)
+                    {
+                        ExplodeSmokeGrenade();
+                    }
                 }
             }
-            return false;
+        }
+
+        public Vector3 GetGrenadeThrowDestination()
+        {
+            Vector3 position = base.transform.position;
+            Debug.DrawRay(playerHeldBy.gameplayCamera.transform.position, playerHeldBy.gameplayCamera.transform.forward, Color.yellow, 15f);
+            grenadeThrowRay = new Ray(playerHeldBy.gameplayCamera.transform.position, playerHeldBy.gameplayCamera.transform.forward);
+            position = ((!Physics.Raycast(grenadeThrowRay, out grenadeHit, 12f, StartOfRound.Instance.collidersAndRoomMaskAndDefault)) ? grenadeThrowRay.GetPoint(10f) : grenadeThrowRay.GetPoint(grenadeHit.distance - 0.05f));
+            Debug.DrawRay(position, Vector3.down, Color.blue, 15f);
+            grenadeThrowRay = new Ray(position, Vector3.down);
+            if (Physics.Raycast(grenadeThrowRay, out grenadeHit, 30f, StartOfRound.Instance.collidersAndRoomMaskAndDefault))
+            {
+                return grenadeHit.point + Vector3.up * 0.05f;
+            }
+
+            return grenadeThrowRay.GetPoint(30f);
+        }
+
+        private void ExplodeSmokeGrenade()
+        {
+            if (!hasExploded)
+            {
+                hasExploded = true;
+                itemAudio.PlayOneShot(explodeSFX);
+                WalkieTalkie.TransmitOneShotAudio(itemAudio, explodeSFX);
+                smoke.Play();
+                DestroyObjectInHand(playerThrownBy);
+            }
+        }
+
+        public override void __initializeVariables()
+        {
+            base.__initializeVariables();
+            // TODO: Fix this
+            smoke = ParticleSystem.Instantiate(new SteamValveHazard().valveSteamParticle, base.transform.position, Quaternion.identity);
+            itemAnimator = new StunGrenadeItem().itemAnimator;
+        }
+
+        public override string __getTypeName()
+        {
+            return "SmokeGrenade";
         }
     }
 }

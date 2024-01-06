@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using ModelReplacement;
 
-namespace LethalWarfare2.Modules
+namespace LethalWarfare2.Modules.Model
 {
     public class GhostReplacement : BodyReplacementBase
     {
