@@ -1,10 +1,14 @@
 # Lethal Warfare 2 v1.2.0
-### Adds the Modern Warfare 2 2022 Models to the game
+### Modern Warfare 2 2022 in Lethal Company
 
-This mods adds multiple models from Call Of Duty Modern Warfare 2 2022 and some functionalities such as tactical spectating.
+Lethal Company mod that adds Modern Warfare 2022 models and features
 
 ## Planned Features
 Smoke grenades (will give you 15 seconds of enemy sight loss)
+
+Movement detector (will ping the current enemy position for 5 seconds)
+
+Voiceline communication for items and enemies
 
 More models (it takes a day per model dawg :sobs:)
 
@@ -14,8 +18,6 @@ Add guns ?
 I do not own the models, they are from [Activision, Infinity Ward](https://www.infinityward.com)
 
 ## Known Issues
-Cannot toggle on/off the tactical camera
-
 Bugs from [this library](https://github.com/BunyaPineTree/LethalCompany_ModelReplacementAPI)
 
 
