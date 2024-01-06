@@ -16,7 +16,7 @@ namespace LethalWarfare2.Modules
     {
         public const string GUID = "Edouard127.LethalWarfare2";
         public const string NAME = "Lethal Warfare 2";
-        public const string VERSION = "1.2.0";
+        public const string VERSION = "1.2.1";
 
         public static ConfigFile config;
 

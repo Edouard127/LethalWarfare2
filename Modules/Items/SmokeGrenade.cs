@@ -1,120 +1,65 @@
-﻿using System.Collections;
-using GameNetcodeStuff;
+﻿using HarmonyLib;
 using UnityEngine;
 
 namespace LethalWarfare2.Modules.Items
 {
-    internal class SmokeGrenade : CustomItem
+    [HarmonyPatch(typeof(StunGrenadeItem))]
+    internal class SmokeGrenade
     {
-        public ParticleSystem smoke = new ParticleSystem();
+        private static ParticleSystem smoke = new ParticleSystem();
+        private static float particleTime = 15f;
+        private static float particleTimer = 0f;
 
-        public bool pinPulled;
-        public bool inPullingPinAnimation;
-        public Coroutine pullPinCoroutine;
-        public Animator itemAnimator;
-
-        public AudioSource itemAudio;
-        public AudioClip pullPinSFX;
-        public AudioClip explodeSFX;
-
-        public float timeToExplode = 1f;
-        public float explodeTimer;
-        public bool hasExploded;
-
-        public PlayerControllerB playerThrownBy;
-
-        public SmokeGrenade()
+        [HarmonyPatch("__initializeVariables")]
+        [HarmonyPostfix]
+        private static void Start(ref StunGrenadeItem __instance)
         {
-            this.SetName("Smoke Grenade")
-                .SetCost(50)
-                .SetWeight(0f)
-                .SetIcon("Smoke Grenade Image")
-                .SetThrowSFX("Smoke Grenade Throw")
-                .SetIsDefensiveWeapon(true)
-                .SetCanBeGrabbedBeforeGameStart(true)
-                .SetAlwaysInStock(true);
-
-            //itemAnimator = GameObject.Find("StunGrenade").GetComponent<Animator>();
-            //itemAudio = GameObject.Find("StunGrenade").GetComponent<AudioSource>();
-            //pullPinSFX = GameObject.Find("FlashbangPullPin").GetComponent<AudioClip>();
-            explodeSFX = Assets.GetAudioClipFromName("Smoke Grenade Throw");
+            __instance.itemProperties.name = "Smoke Grenade";
+            __instance.itemProperties.weight = 0f;
+            __instance.itemProperties.itemIcon = Assets.GetSpriteFromName("Smoke Grenade Image");
+            // __instance.itemProperties.throwSFX = Assets.GetAudioClipFromName("Smoke Grenade Throw");
+            __instance.itemProperties.isDefensiveWeapon = true;
+            __instance.itemProperties.canBeGrabbedBeforeGameStart = true;
+            __instance.explodeSFX = Assets.GetAudioClipFromName("Smoke Grenade Throw");
+            __instance.TimeToExplode = 1f;
         }
 
-        public override void ItemActivate(bool used, bool buttonDown = true)
+        [HarmonyPatch("ExplodeStunGrenade")]
+        [HarmonyPrefix]
+        private static bool ExplodeStunGrenade(ref StunGrenadeItem __instance)
         {
-            base.ItemActivate(used, buttonDown);
-            if (!this.pinPulled && !this.inPullingPinAnimation && pullPinCoroutine == null)
+            if (!__instance.hasExploded)
             {
-                this.inPullingPinAnimation = true;
-                this.pullPinCoroutine = base.StartCoroutine(PinAnimation());
-            }
-        }
-
-        public override void DiscardItem()
-        {
-            if (playerHeldBy != null)
-            {
-                playerHeldBy.activatingItem = false;
-            }
-            base.DiscardItem();
-        }
-
-        public override void EquipItem()
-        {
-            EnableItemMeshes(enable: true);
-            isPocketed = false;
-        }
-
-        public override void FallWithCurve()
-        {
-            float magnitude = (startFallingPosition - targetFloorPosition).magnitude;
-            base.transform.rotation = Quaternion.Lerp(base.transform.rotation, Quaternion.Euler(properties.restingRotation.x, base.transform.eulerAngles.y, properties.restingRotation.z), 14f * Time.deltaTime / magnitude);
-            base.transform.localPosition = Vector3.Lerp(startFallingPosition, targetFloorPosition, Mathf.Sin(fallTime * 3.14159274f));
-            fallTime += Time.deltaTime * 0.5f;
-        }
-
-        public override void Update()
-        {
-            base.Update();
-            if (pinPulled && !hasExploded)
-            {
-                explodeTimer += Time.deltaTime;
-                if (explodeTimer >= timeToExplode)
+                __instance.hasExploded = true;
+                __instance.itemAudio.PlayOneShot(__instance.explodeSFX);
+                WalkieTalkie.TransmitOneShotAudio(__instance.itemAudio, __instance.explodeSFX);
+                Object.Instantiate(parent: (!__instance.isInElevator) ? RoundManager.Instance.mapPropsContainer.transform : StartOfRound.Instance.elevatorTransform, original: __instance.stunGrenadeExplosion, position: __instance.transform.position, rotation: Quaternion.identity);
+                if (__instance.DestroyGrenade)
                 {
-                    ExplodeSmokeGrenade();
+                    __instance.DestroyObjectInHand(__instance.playerThrownBy);
                 }
             }
+            return false;
         }
 
-        public virtual void ExplodeSmokeGrenade()
+        [HarmonyPatch("Update")]
+        [HarmonyPrefix]
+        private static bool Update(ref StunGrenadeItem __instance)
         {
-            if (!hasExploded)
+            if (__instance.hasExploded && particleTimer > -1f)
             {
-                hasExploded = true;
-                itemAudio.PlayOneShot(explodeSFX);
-                WalkieTalkie.TransmitOneShotAudio(itemAudio, explodeSFX, 1f);
-                smoke.Emit(transform.position, new Vector3(0.5f, 0.5f, 0.5f), 1f, 15f, Color.gray);
+                if (particleTimer > particleTime)
+                {
+                    particleTimer = -1f;
+                    smoke.Stop();
+                }
+                else
+                {
+                    smoke.Emit(__instance.transform.position, new Vector3(2f, 2f, 2f), 200f, 15000f, Color.gray);
+                    particleTimer += Time.deltaTime;
+                }
             }
-            DestroyObjectInHand(playerThrownBy);
-        }
-
-        public IEnumerator PinAnimation()
-        {
-            inPullingPinAnimation = true;
-            playerHeldBy.activatingItem = true;
-            playerHeldBy.doingUpperBodyEmote = 1.16f;
-            playerHeldBy.playerBodyAnimator.SetTrigger("PullGrenadePin");
-            itemAnimator.SetTrigger("pullPin");
-            itemAudio.PlayOneShot(pullPinSFX);
-            WalkieTalkie.TransmitOneShotAudio(itemAudio, pullPinSFX, 1f);
-            yield return new WaitForSeconds(1f);
-            inPullingPinAnimation = false;
-            pinPulled = true;
-            itemUsedUp = true;
-            if (playerHeldBy != null)
-            {
-                playerThrownBy = playerHeldBy;
-            }
+            return false;
         }
     }
 }
