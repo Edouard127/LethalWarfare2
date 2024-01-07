@@ -1,6 +1,7 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
 using ModelReplacement;
+using ModelReplacement.Patches;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static UnityEngine.InputSystem.InputAction;
@@ -74,7 +75,7 @@ namespace LethalWarfare2.Modules
             {
                 if (!displayedTip)
                 {
-                    HUDManager.Instance.DisplaySpectatorTip($"Press [{Plugin.toggleKey.Value.ToString()}] to switch the camera view");
+                    HUDManager.Instance.DisplaySpectatorTip($"Press [{Plugin.toggleKey.Value}] to switch the camera view");
                     displayedTip = true;
                 }
 
@@ -90,7 +91,7 @@ namespace LethalWarfare2.Modules
         {
             // /Environment/HangarShip/Player/ScavengerModel/metarig/spine/spine.001/spine.002/spine.003/spine.004
             Transform? boneRig = GetBoneTransform(__instance.spectatedPlayerScript, "spine.004");
-            hasCustomModel = false; // Waiting for the model replacement api to add a way to check if the player has a custom model
+            hasCustomModel = true;
             spectatedHasCustomModel = boneRig != null;
 
             if (switchCamera && spectatedHasCustomModel)
@@ -101,6 +102,10 @@ namespace LethalWarfare2.Modules
                  + __instance.spectatedPlayerScript.gameplayCamera.transform.forward * Plugin.tacticalCameraOffsetZ.Value;
 
                 __instance.playersManager.spectateCamera.transform.LookAt(__instance.spectateCameraPivot.position);
+            }
+            else
+            {
+                forceDisable = true;
             }
 
             return !switchCamera;

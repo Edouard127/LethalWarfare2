@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using ModelReplacement;
+using System;
 
 namespace LethalWarfare2.Modules.Model
 {
@@ -7,8 +8,7 @@ namespace LethalWarfare2.Modules.Model
     {
         protected override GameObject LoadAssetsAndReturnModel()
         {
-            string model = "Ghost Nightwar";
-            return Assets.MainModelBundle.LoadAsset<GameObject>(model);
+            return Assets.GetAssetFromName<GameObject>("Ghost Nightwar");
         }
         /*protected override void OnEmoteStart(int emoteId)
         {

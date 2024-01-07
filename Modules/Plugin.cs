@@ -5,7 +5,6 @@ using System.Reflection;
 using ModelReplacement;
 using BepInEx.Configuration;
 using System;
-using UnityEngine.InputSystem;
 using LethalWarfare2.Modules.Model;
 
 namespace LethalWarfare2.Modules
@@ -17,7 +16,7 @@ namespace LethalWarfare2.Modules
     {
         public const string GUID = "Edouard127.LethalWarfare2";
         public const string NAME = "Lethal Warfare 2";
-        public const string VERSION = "1.2.1";
+        public const string VERSION = "1.2.2";
 
         public static ConfigFile config;
 
@@ -52,6 +51,12 @@ namespace LethalWarfare2.Modules
             toggleKey = config.Bind("Lethal Warfare 2", "Keyboard Shortcut", KeyCode.F1, "Toggle the tactical camera view");
 
             ModelReplacementAPI.RegisterSuitModelReplacement("Ghost Nightwar", typeof(GhostReplacement));
+
+            /*SmokeGrenade smokeGrenade = SmokeGrenade.LoadAssetAndReturnInstance();
+            LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(smokeGrenade.itemProperties.spawnPrefab);
+            LethalLib.Modules.Utilities.FixMixerGroups(smokeGrenade.itemProperties.spawnPrefab);
+            LethalLib.Modules.Items.RegisterScrap(smokeGrenade.itemProperties, 1000, LethalLib.Modules.Levels.LevelTypes.All);
+            LethalLib.Modules.Items.RegisterShopItem(smokeGrenade.itemProperties, null, null, SmokeGrenade.CreateTerminalNode(), 1);*/
 
             harmony.PatchAll();
             Logger.LogInfo($"Plugin {NAME} {VERSION} loaded!");
@@ -99,10 +104,10 @@ namespace LethalWarfare2.Modules
             }
         }
 
-        public static UnityEngine.Object GetAssetFromName(string name) => MainModelBundle.LoadAsset(name) ?? MainAssetBundle.LoadAsset(name);
-        public static Shader GetShaderFromName(string name) => GetAssetFromName(name) as Shader;
-        public static AudioClip GetAudioClipFromName(string name) => GetAssetFromName(name) as AudioClip;
-        public static Sprite GetSpriteFromName(string name) => GetAssetFromName(name) as Sprite;
+        public static T GetAssetFromName<T>(string name) where T : UnityEngine.Object 
+        {
+            return MainModelBundle.LoadAsset<T>(name) ?? MainAssetBundle.LoadAsset<T>(name) ?? PostProcessingBundle.LoadAsset<T>(name) ?? throw new Exception($"Could not find asset {name}!");
+        }
 
         /*public class RandomAudioClip
         {
