@@ -1,4 +1,4 @@
-# Lethal Warfare 2 v1.2.0
+# Lethal Warfare 2 v1.2.3
 ### Modern Warfare 2 2022 in Lethal Company
 
 Lethal Company mod that adds Modern Warfare 2022 models and features
