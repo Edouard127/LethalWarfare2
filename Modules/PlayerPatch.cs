@@ -1,7 +1,7 @@
-﻿using GameNetcodeStuff;
+﻿using System.ComponentModel;
+using GameNetcodeStuff;
 using HarmonyLib;
 using ModelReplacement;
-using ModelReplacement.Patches;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using static UnityEngine.InputSystem.InputAction;
@@ -91,7 +91,7 @@ namespace LethalWarfare2.Modules
         {
             // /Environment/HangarShip/Player/ScavengerModel/metarig/spine/spine.001/spine.002/spine.003/spine.004
             Transform? boneRig = GetBoneTransform(__instance.spectatedPlayerScript, "spine.004");
-            hasCustomModel = true;
+            hasCustomModel = !ModelReplacementAPI.GetPlayerModelReplacement(__instance);
             spectatedHasCustomModel = boneRig != null;
 
             if (switchCamera && spectatedHasCustomModel)
@@ -115,8 +115,9 @@ namespace LethalWarfare2.Modules
         {
             // This will assure that the tactical camera will always the same distance from the player regardless of the player's model
             // We could even add an object directly on the model to make it easier to the position
-            BodyReplacementBase? component = __instance.thisPlayerBody.gameObject.GetComponent<BodyReplacementBase>();
-            return component?.avatar.GetAvatarTransformFromBoneName(bone);
+            BodyReplacementBase component;
+            ModelReplacementAPI.GetPlayerModelReplacement(__instance, out component);
+            return component?.avatar.GetAvatarTransformFromBoneName(bone) ?? null;
         }
 
         public static void ToggleTacticalCamera(CallbackContext ctx)
