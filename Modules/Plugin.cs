@@ -51,8 +51,8 @@ namespace LethalWarfare2.Modules
             toggleKey = config.Bind("Lethal Warfare 2", "Keyboard Shortcut", KeyCode.F1, "Toggle the tactical camera view");
 
             ModelReplacementAPI.RegisterSuitModelReplacement("Ghost Nightwar", typeof(GhostReplacement));
-            ModelReplacementAPI.RegisterSuitModelReplacement("Alex Keller", typeof(AlexReplacement));
-            ModelReplacementAPI.RegisterSuitModelReplacement("Valeria Shadow", typeof(ValeriaReplacement));
+            //ModelReplacementAPI.RegisterSuitModelReplacement("Alex Keller", typeof(AlexReplacement));
+            //ModelReplacementAPI.RegisterSuitModelReplacement("Valeria Shadow", typeof(ValeriaReplacement));
 
             /*SmokeGrenade smokeGrenade = SmokeGrenade.LoadAssetAndReturnInstance();
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(smokeGrenade.itemProperties.spawnPrefab);

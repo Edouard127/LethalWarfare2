@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using GameNetcodeStuff;
 using HarmonyLib;
 using ModelReplacement;
@@ -64,7 +65,7 @@ namespace LethalWarfare2.Modules
         [HarmonyPostfix]
         private static void Update(ref PlayerControllerB __instance)
         {
-            switchCamera = __instance.spectatedPlayerScript != null && spectatedHasCustomModel && !forceDisable;
+            switchCamera = __instance.isPlayerDead && __instance.spectatedPlayerScript != null && spectatedHasCustomModel && !forceDisable;
 
             __instance.disableLookInput = switchCamera && !__instance.quickMenuManager.isMenuOpen;
 
@@ -117,7 +118,7 @@ namespace LethalWarfare2.Modules
             // We could even add an object directly on the model to make it easier to the position
             BodyReplacementBase component;
             ModelReplacementAPI.GetPlayerModelReplacement(__instance, out component);
-            return component?.avatar.GetAvatarTransformFromBoneName(bone) ?? null;
+            return component?.avatar?.GetAvatarTransformFromBoneName(bone) ?? null;
         }
 
         public static void ToggleTacticalCamera(CallbackContext ctx)
