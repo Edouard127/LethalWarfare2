@@ -1,6 +1,4 @@
-﻿using System;
-using System.ComponentModel;
-using GameNetcodeStuff;
+﻿using GameNetcodeStuff;
 using HarmonyLib;
 using ModelReplacement;
 using UnityEngine;
@@ -91,8 +89,8 @@ namespace LethalWarfare2.Modules
         private static bool RaycastSpectateCameraAroundPivot(ref PlayerControllerB __instance)
         {
             // /Environment/HangarShip/Player/ScavengerModel/metarig/spine/spine.001/spine.002/spine.003/spine.004
-            Transform? boneRig = GetBoneTransform(__instance.spectatedPlayerScript, "spine.004");
-            hasCustomModel = !ModelReplacementAPI.GetPlayerModelReplacement(__instance);
+            Transform boneRig = GetBoneTransform(__instance.spectatedPlayerScript, "spine.004");
+            hasCustomModel = false;
             spectatedHasCustomModel = boneRig != null;
 
             if (switchCamera && spectatedHasCustomModel)
@@ -104,21 +102,17 @@ namespace LethalWarfare2.Modules
 
                 __instance.playersManager.spectateCamera.transform.LookAt(__instance.spectateCameraPivot.position);
             }
-            else
-            {
-                forceDisable = true;
-            }
 
             return !switchCamera;
         }
 
-        public static Transform? GetBoneTransform(PlayerControllerB __instance, string bone)
+        public static Transform GetBoneTransform(PlayerControllerB __instance, string bone)
         {
             // This will assure that the tactical camera will always the same distance from the player regardless of the player's model
             // We could even add an object directly on the model to make it easier to the position
             BodyReplacementBase component;
             ModelReplacementAPI.GetPlayerModelReplacement(__instance, out component);
-            return component?.avatar?.GetAvatarTransformFromBoneName(bone) ?? null;
+            return component.avatar.GetAvatarTransformFromBoneName(bone);
         }
 
         public static void ToggleTacticalCamera(CallbackContext ctx)
