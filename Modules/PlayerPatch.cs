@@ -84,6 +84,13 @@ namespace LethalWarfare2.Modules
             }
         }
 
+        [HarmonyReversePatch(HarmonyReversePatchType.Original)]
+        [HarmonyPatch("SpectateNextPlayer")]
+        private static void SpectateNextPlayer(ref PlayerControllerB __instance)
+        {
+            throw new System.NotImplementedException("Reverting SpectateNextPlayer to original");
+        }
+
         [HarmonyPatch("RaycastSpectateCameraAroundPivot")]
         [HarmonyPrefix]
         private static bool RaycastSpectateCameraAroundPivot(ref PlayerControllerB __instance)
