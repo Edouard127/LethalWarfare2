@@ -6,9 +6,18 @@ using ModelReplacement;
 using BepInEx.Configuration;
 using System;
 using LethalWarfare2.Modules.Model;
+using System.Collections.Generic;
 
 namespace LethalWarfare2.Modules
 {
+    public static class PluginInfo
+    {
+        public const string GUID = "Edouard127.LethalWarfare2";
+        public const string NAME = "Lethal Warfare 2";
+        public const string VERSION = "1.2.6";
+        public const string WEBSITE = "https://github.com/Edouard127/LethalWarfare2";
+    }
+
     [BepInPlugin(GUID, NAME, VERSION)]
     [BepInDependency("meow.ModelReplacementAPI", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("x753.More_Suits", BepInDependency.DependencyFlags.HardDependency)]
@@ -16,14 +25,15 @@ namespace LethalWarfare2.Modules
     {
         public const string GUID = "Edouard127.LethalWarfare2";
         public const string NAME = "Lethal Warfare 2";
-        public const string VERSION = "1.2.5";
+        public const string VERSION = "1.2.6";
 
         public static ConfigFile config;
+
+        public static List<BepInEx.PluginInfo> problematicMods = new List<BepInEx.PluginInfo>();
 
         private Harmony harmony = new Harmony(GUID);
 
 
-        // TODO: Implement this
         public static ConfigEntry<bool> disablePhysics;
         public static ConfigEntry<double> disablePhysicsRange;
 
@@ -34,7 +44,7 @@ namespace LethalWarfare2.Modules
 
         public static ConfigEntry<KeyCode> toggleKey;
 
-        private void Awake()
+        public void Awake()
         {
             config = Config;
             Assets.PopulateAssets();
@@ -51,8 +61,8 @@ namespace LethalWarfare2.Modules
             toggleKey = config.Bind("Lethal Warfare 2", "Keyboard Shortcut", KeyCode.F1, "Toggle the tactical camera view");
 
             ModelReplacementAPI.RegisterSuitModelReplacement("Ghost Nightwar", typeof(GhostReplacement));
-            //ModelReplacementAPI.RegisterSuitModelReplacement("Alex Keller", typeof(AlexReplacement));
-            //ModelReplacementAPI.RegisterSuitModelReplacement("Valeria Shadow", typeof(ValeriaReplacement));
+            ModelReplacementAPI.RegisterSuitModelReplacement("Alex Keller", typeof(AlexReplacement));
+            ModelReplacementAPI.RegisterSuitModelReplacement("Valeria Garza", typeof(ValeriaReplacement));
 
             /*SmokeGrenade smokeGrenade = SmokeGrenade.LoadAssetAndReturnInstance();
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(smokeGrenade.itemProperties.spawnPrefab);
@@ -62,11 +72,37 @@ namespace LethalWarfare2.Modules
 
             harmony.PatchAll();
             Logger.LogInfo($"Plugin {NAME} {VERSION} loaded!");
+
+            PluginCheck();
+        }
+
+        private void PluginCheck()
+        {
+            foreach (string pluginName in new string[] { "me.swipez.melonloader.morecompany" })
+            {
+                if (IsPluginPresent(pluginName, out BepInEx.PluginInfo plugin))
+                {
+                    problematicMods.Add(plugin);
+                }
+            }
+
+            if (problematicMods.Count > 0)
+            {
+                Logger.LogWarning($"The following mods are known to cause issues with {NAME}:");
+                foreach (var mod in problematicMods)
+                {
+                    Logger.LogWarning($"- {mod.Metadata.Name} {mod.Metadata.Version}");
+                }
+            }
+        }
+
+        private static bool IsPluginPresent(string pluginName, out BepInEx.PluginInfo plugin)
+        {
+            return BepInEx.Bootstrap.Chainloader.PluginInfos.TryGetValue(pluginName, out plugin);
         }
     }
     public static class Assets
     {
-        // The reason why I can't have one bundle for everything is because I lack the knowledge of Unity bundles and the SDK I use to bundle the models has a monopole on the bundles
         public static string modelBundleName = "mw2bundle";
         public static string assetBundleName = "itembundle";
         public static string postProcessingBundleName = "postprocessing";
@@ -77,32 +113,19 @@ namespace LethalWarfare2.Modules
         public static string GetAssemblyName() => Assembly.GetExecutingAssembly().FullName.Split(',')[0];
         public static void PopulateAssets()
         {
-            if (MainModelBundle == null)
+            using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetAssemblyName() + "." + modelBundleName))
             {
-                using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetAssemblyName() + "." + modelBundleName))
-                {
-                    MainModelBundle = AssetBundle.LoadFromStream(assetStream);
-                }
-
-                using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetAssemblyName() + "." + assetBundleName))
-                {
-                    MainAssetBundle = AssetBundle.LoadFromStream(assetStream);
-                }
-
-                using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetAssemblyName() + "." + postProcessingBundleName))
-                {
-                    PostProcessingBundle = AssetBundle.LoadFromStream(assetStream);
-                }
+                MainModelBundle = AssetBundle.LoadFromStream(assetStream);
             }
 
-            if (MainModelBundle == null)
+            using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetAssemblyName() + "." + assetBundleName))
             {
-                throw new Exception("Could not load model bundle!");
+                MainAssetBundle = AssetBundle.LoadFromStream(assetStream);
             }
 
-            if (MainAssetBundle == null)
+            using (var assetStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(GetAssemblyName() + "." + postProcessingBundleName))
             {
-                throw new Exception("Could not load asset bundle!");
+                PostProcessingBundle = AssetBundle.LoadFromStream(assetStream);
             }
         }
 

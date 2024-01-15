@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using ModelReplacement;
-using System;
 
 namespace LethalWarfare2.Modules.Model
 {
@@ -8,7 +7,7 @@ namespace LethalWarfare2.Modules.Model
     {
         protected override GameObject LoadAssetsAndReturnModel()
         {
-            return Assets.GetAssetFromName<GameObject>("Ghost Nightwar");
+            return Assets.GetAssetFromName<GameObject>("GhostNightwar");
         }
     }
 
@@ -16,7 +15,7 @@ namespace LethalWarfare2.Modules.Model
     {
         protected override GameObject LoadAssetsAndReturnModel()
         {
-            return Assets.GetAssetFromName<GameObject>("Alex Keller");
+            return Assets.GetAssetFromName<GameObject>("AlexKeller");
         }
     }
 
@@ -24,7 +23,7 @@ namespace LethalWarfare2.Modules.Model
     {
         protected override GameObject LoadAssetsAndReturnModel()
         {
-            return Assets.GetAssetFromName<GameObject>("Valeria Shadow");
+            return Assets.GetAssetFromName<GameObject>("ValeriaGarza");
         }
     }
 }

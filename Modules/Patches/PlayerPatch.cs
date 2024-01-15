@@ -1,4 +1,5 @@
-﻿using GameNetcodeStuff;
+﻿using BepInEx.Bootstrap;
+using GameNetcodeStuff;
 using HarmonyLib;
 using ModelReplacement;
 using UnityEngine;
@@ -74,7 +75,7 @@ namespace LethalWarfare2.Modules
             {
                 if (!displayedTip)
                 {
-                    HUDManager.Instance.DisplaySpectatorTip($"Press [{Plugin.toggleKey.Value}] to switch the camera view");
+                    HUDManager.Instance.DisplaySpectatorTip($"Press [{Plugin.toggleKey.Value}] to switch te camera view");
                     displayedTip = true;
                 }
 
@@ -84,11 +85,12 @@ namespace LethalWarfare2.Modules
             }
         }
 
-        [HarmonyReversePatch(HarmonyReversePatchType.Original)]
         [HarmonyPatch("SpectateNextPlayer")]
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Low)] // Patch every mods that messes with this
         private static void SpectateNextPlayer(ref PlayerControllerB __instance)
         {
-            throw new System.NotImplementedException("Reverting SpectateNextPlayer to original");
+            RaycastSpectateCameraAroundPivot(ref __instance);
         }
 
         [HarmonyPatch("RaycastSpectateCameraAroundPivot")]
@@ -97,8 +99,8 @@ namespace LethalWarfare2.Modules
         {
             // /Environment/HangarShip/Player/ScavengerModel/metarig/spine/spine.001/spine.002/spine.003/spine.004
             Transform? boneRig = GetBoneTransform(__instance.spectatedPlayerScript, "spine.004");
-            hasCustomModel = false;
             spectatedHasCustomModel = boneRig != null;
+            hasCustomModel = false; // Later
 
             if (switchCamera && spectatedHasCustomModel)
             {
@@ -117,6 +119,7 @@ namespace LethalWarfare2.Modules
         {
             // This will assure that the tactical camera will always the same distance from the player regardless of the player's model
             // We could even add an object directly on the model to make it easier to the position
+            if (__instance.isPlayerDead) return null;
             ModelReplacementAPI.GetPlayerModelReplacement(__instance, out BodyReplacementBase component);
             return component?.avatar?.GetAvatarTransformFromBoneName(bone);
         }
